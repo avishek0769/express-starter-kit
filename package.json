@@ -1,5 +1,5 @@
 {
-  "name": "backend-kit-npm",
+  "name": "create-express-starter-kit",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,8 +9,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
-  "devDependencies": {
-    "typescript": "^5.9.3"
+  "type": "module",
+  "dependencies": {
+    "inquirer": "^13.3.2",
+    "ora": "^9.3.0"
   }
 }
