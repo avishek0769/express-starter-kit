@@ -2,6 +2,7 @@ import inquirer from "inquirer";
 import ora from "ora";
 import { exec } from "child_process";
 import fs from "fs";
+import fsExtra from "fs-extra";
 
 /*
 Steps of script execution --
@@ -16,6 +17,9 @@ async function init() {
             fs.readFileSync("package.json", { encoding: "utf8" }),
         );
         packageJsonFileContent.type = "module";
+        packageJsonFileContent.scripts = {
+            dev: "node --watch index.js",
+        };
         fs.writeFileSync(
             "package.json",
             JSON.stringify(packageJsonFileContent),
@@ -38,7 +42,10 @@ async function init() {
             type: "select",
             message: "Choose validation library -",
             name: "validation",
-            choices: ["None", "Zod"],
+            choices: [
+                { name: "None", value: "none" },
+                { name: "Zod", value: "zod" }
+            ]
         },
         {
             type: "select",
@@ -55,43 +62,68 @@ async function init() {
             message:
                 "Choose in-memory database integration (client - ioredis) -",
             name: "inMemoryDb",
-            choices: ["None", "Redis", "Valkey"],
+            choices: [
+                { name: "None", value: "none" },
+                { name: "Redis", value: "redis" },
+                { name: "Valkey", value: "valkey" }
+            ],
         },
         {
             type: "confirm",
             message: "Generate docker-compose for selected DBs ?",
             name: "docker",
-            when: (answers) =>
-                answers.database != "none" || answers.inMemoryDb != "none",
+            when: (answers) => answers.database != "none" || answers.inMemoryDb != "none",
             default: true,
         },
         {
-            type: "confirm",
-            message: "Do you want file uploads handling using multer ?",
-            name: "multer",
-            default: true,
+            type: "select",
+            message: "File uploads handling -",
+            name: "fileUpload",
+            choices: [
+                { name: "None", value: "none" },
+                { name: "Multer + Cloudinary", value: "cloudinary" },
+                { name: "Multer + AWS S3", value: "s3" },
+            ],
         },
     ]);
 
-    const spinner = ora("Installing necessary packages...").start();
+    const installationSpinner = ora("Installing necessary packages...").start();
 
-    const jwt = answers.auth.toLowerCase() == "jwt" ? "jsonwebtoken cookie-parser" : "";
-    const zod = answers.validation.toLowerCase() == "zod" ? "zod" : "";
-    const db = answers.database.toLowerCase() == "nosql"
+    const jwt = answers.auth == "jwt" ? "jsonwebtoken cookie-parser" : "";
+    const zod = answers.validation == "zod" ? "zod" : "";
+    const db = answers.database == "nosql"
             ? "mongoose"
             : "prisma @prisma/client @prisma/adapter-pg pg";
-    const multer = answers.multer ? "multer" : "";
+    const fileUploads = answers.fileUpload == "cloudinary"
+            ? "multer cloudinary"
+            : answers.fileUpload == "s3"
+              ? "multer s3"
+              : "";
 
     const p2 = exec(
-        `npm install express dotenv cors ${jwt} ${zod} ${db} ioredis ${multer}`,
+        `npm install express dotenv cors ${jwt} ${zod} ${db} ioredis ${fileUploads}`,
     );
 
     p2.on("exit", (code) => {
         if (code === 0) {
-            spinner.succeed("Installation done");
+            installationSpinner.succeed("Installation done");
         } else {
-            spinner.fail(`Process exited with code ${code}`);
+            installationSpinner.fail(`Process exited with code ${code}`);
         }
+
+        const codeGenerationSpinner = ora("Generating code...").start();
+
+        fsExtra.copy("../template/base/", "./")
+        .then(() => {
+            
+        })
+        .catch((err) => {
+            console.error("Error copying files:", err);
+            codeGenerationSpinner.fail("Code generation failed");
+        })
+        .finally(() => {
+            codeGenerationSpinner.succeed("Code generation done");
+        });
     });
 }
 
