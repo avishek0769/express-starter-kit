@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
@@ -19,10 +20,11 @@ app.use(
 app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
 app.use(express.json());
+app.use(cookieParser());
 
 // Routes
-import exampleRouter from "./routers/example.route.js";
-app.use("/api/v1/example", exampleRouter);
+import userRouter from "./routers/user.route.js";
+app.use("/api/v1/user", userRouter);
 
 app.use(errorHandler);
 

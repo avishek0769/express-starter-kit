@@ -45,7 +45,7 @@ async function init() {
             choices: [
                 { name: "None", value: "none" },
                 { name: "Zod", value: "zod" }
-            ]
+            ],
         },
         {
             type: "select",
@@ -56,6 +56,10 @@ async function init() {
                 { name: "MongoDB (Mongoose)", value: "nosql" },
                 { name: "PostgreSQL (Prisma)", value: "sql" },
             ],
+            validate: function (input) {
+                console.log(input);
+                return true;
+            } 
         },
         {
             type: "select",
@@ -89,7 +93,7 @@ async function init() {
 
     const installationSpinner = ora("Installing necessary packages...").start();
 
-    const jwt = answers.auth == "jwt" ? "jsonwebtoken cookie-parser" : "";
+    const jwt = answers.auth == "jwt" ? "jsonwebtoken cookie-parser bcrypt" : "";
     const zod = answers.validation == "zod" ? "zod" : "";
     const db = answers.database == "nosql"
             ? "mongoose"
@@ -115,15 +119,40 @@ async function init() {
 
         fsExtra.copy("../template/base/", "./")
         .then(() => {
-            
+            if(answers.auth == "jwt") {
+                if(answers.database == "nosql") {
+                    fs.unlink("./controllers/example.controller.js", () => {});
+                    fs.unlink("./models/example.model.js", () => {});
+                    fs.unlink("./routers/example.route.js", () => {});
+                    fs.unlink("./middlewares/example.middleware.js", () => {});
+                    fs.unlink("./app.js", () => {});
+                    fs.unlink("./index.js", () => {});
+
+                    const templateRoot = "../template/auth/jwt/mongo";
+                    
+                    fsExtra.copy(`${templateRoot}/user.controller.js`, "./controllers/user.controller.js")
+                    fsExtra.copy(`${templateRoot}/user.model.js`, "./models/user.model.js")
+                    fsExtra.copy(`${templateRoot}/user.route.js`, "./routers/user.route.js")
+                    fsExtra.copy(`${templateRoot}/auth.middleware.js`, "./middlewares/auth.middleware.js")
+                    fsExtra.copy(`${templateRoot}/app.js`, "./app.js")
+                    fsExtra.copy(`${templateRoot}/index.js`, "./index.js")
+                    fsExtra.copy(`${templateRoot}/connectDB.js`, "./utils/connectDB.js")
+                    fs.readFile(`${templateRoot}/.env`, { encoding: "utf8" }, (_, data) => {
+                        fs.appendFile(".env", `\n${data}`, () => {});
+                    });
+                }
+                else if(answers.database == "sql") {}
+            }
+            else if(answers.auth == "clerk") {
+                
+            }
+
+            codeGenerationSpinner.succeed("Code generation done");
         })
         .catch((err) => {
             console.error("Error copying files:", err);
             codeGenerationSpinner.fail("Code generation failed");
         })
-        .finally(() => {
-            codeGenerationSpinner.succeed("Code generation done");
-        });
     });
 }
 
