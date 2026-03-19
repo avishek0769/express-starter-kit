@@ -49,11 +49,7 @@ async function init() {
                 { name: "None", value: "none" },
                 { name: "MongoDB (Mongoose)", value: "nosql" },
                 { name: "PostgreSQL (Prisma)", value: "sql" },
-            ],
-            validate: function (input) {
-                console.log(input);
-                return true;
-            },
+            ]
         },
         {
             type: "select",
@@ -163,7 +159,8 @@ async function init() {
                         fs.appendFile(".env", `\n${data}`, () => {});
                     },
                 );
-            } else if (answers.database == "sql") {
+            }
+            else if (answers.database == "sql") {
                 const templateRoot = "../template/auth/jwt/postgres";
                 const p = exec(
                     "npx prisma init --datasource-provider postgresql --output ../generated/prisma",
@@ -210,11 +207,14 @@ async function init() {
                     codeGenerationSpinner.succeed("Code generation done");
                 });
             }
-        } else if (answers.auth == "clerk") {
+        }
+        else if (answers.auth == "clerk") {
+            const templateRoot = "../template/auth/clerk";
+
             fs.unlink("./controllers/app.js", () => {});
-            fsExtra.copy("../template/auth/clerk/app.js", "./app.js");
+            fsExtra.copy(`${templateRoot}/app.js`, "./app.js");
             fs.readFile(
-                "../template/auth/clerk/.env",
+                `${templateRoot}/.env`,
                 { encoding: "utf8" },
                 (_, data) => {
                     fs.appendFile(".env", `\n${data}`, () => {});
@@ -222,6 +222,48 @@ async function init() {
             );
 
             codeGenerationSpinner.succeed("Code generation done");
+        }
+        
+        if(answers.database == "nosql") {
+            const templateRoot = "../template/database/mongodb";
+
+            fsExtra.copy(
+                `${templateRoot}/connectDB.js`,
+                "./utils/connectDB.js",
+            );
+            fsExtra.copy(
+                `${templateRoot}/example.model.js`,
+                "./models/example.model.js",
+            );
+            fs.readFile(
+                `${templateRoot}/.env`,
+                { encoding: "utf8" },
+                (_, data) => {
+                    fs.appendFile(".env", `\n${data}`, () => {});
+                },
+            );
+
+            codeGenerationSpinner.succeed("Code generation done");
+        }
+        else if (answers.database == "sql") {
+            const templateRoot = "../template/database/postgres";
+            const p = exec(
+                "npx prisma init --datasource-provider postgresql --output ../generated/prisma",
+            );
+
+            p.on("exit", (code) => {
+                fsExtra.copy(
+                    `${templateRoot}/connectDB.js`,
+                    "./utils/connectDB.js",
+                );
+                fsExtra.copy(
+                    `${templateRoot}/prismaClient.js`,
+                    "./utils/prismaClient.js",
+                );
+                
+                execSync("npx prisma generate");
+                codeGenerationSpinner.succeed("Code generation done");
+            });
         }
     });
 }
