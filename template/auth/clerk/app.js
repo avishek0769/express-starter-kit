@@ -1,0 +1,32 @@
+import express from "express";
+import cors from "cors";
+import { clerkMiddleware, requireAuth } from "@clerk/express";
+
+const app = express();
+
+const errorHandler = (err, req, res, next) => {
+    const statusCode = err.statusCode || 500;
+    const message = err.message || "Internal Server Error";
+    console.error(err);
+    res.status(statusCode).json({ message });
+};
+
+app.use(
+    cors({
+        origin: process.env.CORS_ORIGIN,
+        methods: process.env.CORS_METHODS,
+        credentials: true,
+    }),
+);
+app.use(express.urlencoded({ extended: true, limit: "16kb" }));
+app.use(express.static("public"));
+app.use(express.json());
+app.use(clerkMiddleware());
+
+// Routes
+import exampleRouter from "./routers/example.route.js";
+app.use("/api/v1/example", requireAuth(), exampleRouter);
+
+app.use(errorHandler);
+
+export { app };
