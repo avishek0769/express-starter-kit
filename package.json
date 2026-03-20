@@ -3,11 +3,11 @@
     "version": "0.1.0",
     "description": "CLI to scaffold production-ready Express backends with auth, DB, caching, validation, and Docker support.",
     "bin": {
-        "create-express-starter-kit": "./bin/index.js"
+        "create-express-starter-kit": "bin/index.js"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/avishek0769/express-starter-kit"
+        "url": "git+https://github.com/avishek0769/express-starter-kit.git"
     },
     "bugs": {
         "url": "https://github.com/avishek0769/express-starter-kit/issues"
@@ -15,8 +15,7 @@
     "homepage": "https://github.com/avishek0769/express-starter-kit/#readme",
     "files": [
         "bin",
-        "templates",
-        "utils"
+        "template"
     ],
     "keywords": [
         "cli",
@@ -36,5 +35,6 @@
         "fs-extra": "^11.3.4",
         "inquirer": "^13.3.2",
         "ora": "^9.3.0"
-    }
+    },
+    "devDependencies": {}
 }

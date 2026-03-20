@@ -4,6 +4,15 @@ import ora from "ora";
 import { exec, execSync } from "child_process";
 import fs from "fs/promises";
 import fsExtra from "fs-extra";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const TEMPLATE_BASE = path.join(__dirname, "../template");
+
+const tp = (...segments) => path.join(TEMPLATE_BASE, ...segments);
 
 async function init() {
     const p1 = exec("npm init -y");
@@ -116,7 +125,7 @@ async function init() {
 
         const codeGenerationSpinner = ora("Setting up codebase...").start();
 
-        await fsExtra.copy("../template/base/", "./").catch((err) => {
+        await fsExtra.copy(tp("base"), "./").catch((err) => {
             console.error("Error copying files:", err);
             codeGenerationSpinner.fail("Codebase setup failed");
             process.exit(1);
@@ -130,7 +139,7 @@ async function init() {
             await fs.unlink("./index.js");
 
             if (answers.database == "nosql") {
-                const templateRoot = "../template/auth/jwt/mongo";
+                const templateRoot = tp("auth", "jwt", "mongo");
 
                 await fsExtra.copy(
                     `${templateRoot}/user.controller.js`,
@@ -154,13 +163,13 @@ async function init() {
                     `${templateRoot}/connectDB.js`,
                     "./utils/connectDB.js",
                 );
-                const envData = await fs.readFile(`${templateRoot}/.env`, {
-                    encoding: "utf8",
-                });
+                const envData = await fs.readFile(
+                    path.join(templateRoot, ".env"),
+                    { encoding: "utf8" },
+                );
                 await fs.appendFile(".env", `\n${envData}`);
-            }
-            else if (answers.database == "sql") {
-                const templateRoot = "../template/auth/jwt/postgres";
+            } else if (answers.database == "sql") {
+                const templateRoot = tp("auth", "jwt", "postgres");
                 await new Promise((resolve, reject) => {
                     const p = exec(
                         "npx prisma init --datasource-provider postgresql --output ../generated/prisma",
@@ -203,7 +212,7 @@ async function init() {
                             "./utils/prismaClient.js",
                         );
                         const envData = await fs.readFile(
-                            `${templateRoot}/.env`,
+                            path.join(templateRoot, ".env"),
                             { encoding: "utf8" },
                         );
                         await fs.appendFile(".env", `\n${envData}`);
@@ -214,8 +223,8 @@ async function init() {
                 });
             }
 
-            if(answers.validation == "zod") {
-                const templateRoot = "../template/validation/zod/jwt";
+            if (answers.validation == "zod") {
+                const templateRoot = tp("validation", "zod", "jwt");
                 await fs.unlink("./controllers/user.controller.js");
                 await fs.unlink("./routers/user.route.js");
 
@@ -224,8 +233,7 @@ async function init() {
                         `${templateRoot}/user.controller.m.js`,
                         "./controllers/user.controller.js",
                     );
-                }
-                else if (answers.database == "sql") {
+                } else if (answers.database == "sql") {
                     await fsExtra.copy(
                         `${templateRoot}/user.controller.p.js`,
                         "./controllers/user.controller.js",
@@ -242,11 +250,11 @@ async function init() {
                 );
             }
         } else if (answers.auth == "clerk") {
-            const templateRoot = "../template/auth/clerk";
+            const templateRoot = tp("auth", "clerk");
 
             await fs.unlink("./app.js");
             await fsExtra.copy(`${templateRoot}/app.js`, "./app.js");
-            const envData = await fs.readFile(`${templateRoot}/.env`, {
+            const envData = await fs.readFile(path.join(templateRoot, ".env"), {
                 encoding: "utf8",
             });
             await fs.appendFile(".env", `\n${envData}`);
@@ -254,7 +262,7 @@ async function init() {
 
         if (answers.auth == "none" || answers.auth == "clerk") {
             if (answers.database == "nosql") {
-                const templateRoot = "../template/database/mongodb";
+                const templateRoot = tp("database", "mongodb");
 
                 await fsExtra.copy(
                     `${templateRoot}/connectDB.js`,
@@ -264,12 +272,15 @@ async function init() {
                     `${templateRoot}/example.model.js`,
                     "./models/example.model.js",
                 );
-                const envData = await fs.readFile(`${templateRoot}/.env`, {
-                    encoding: "utf8",
-                });
+                const envData = await fs.readFile(
+                    path.join(templateRoot, ".env"),
+                    {
+                        encoding: "utf8",
+                    },
+                );
                 await fs.appendFile(".env", `\n${envData}`);
             } else if (answers.database == "sql") {
-                const templateRoot = "../template/database/postgres";
+                const templateRoot = tp("database", "postgres");
                 const p = exec(
                     "npx prisma init --datasource-provider postgresql --output ../generated/prisma",
                 );
@@ -289,10 +300,10 @@ async function init() {
         }
 
         if (answers.inMemoryDb == "redis") {
-            const templateRoot = "../template/in_memory/redis";
+            const templateRoot = tp("in_memory", "redis");
             await fsExtra.copy(`${templateRoot}/redis.js`, "./utils/redis.js");
         } else if (answers.inMemoryDb == "valkey") {
-            const templateRoot = "../template/in_memory/valkey";
+            const templateRoot = tp("in_memory", "valkey");
             await fsExtra.copy(
                 `${templateRoot}/valkey.js`,
                 "./utils/valkey.js",
@@ -300,32 +311,34 @@ async function init() {
         }
 
         if (answers.fileUpload == "cloudinary") {
-            const templateRoot = "../template/fileUploads/cloudinary";
+            const templateRoot = tp("fileUploads");
             await fsExtra.copy(
-                "../template/fileUploads/multer.middleware.js",
+                `${templateRoot}/multer.middleware.js`,
                 "./middlewares/multer.middleware.js",
             );
             await fsExtra.copy(
-                `${templateRoot}/cloudinary.js`,
+                `${templateRoot}/cloudinary/cloudinary.js`,
                 "./utils/cloudinary.js",
             );
-            const envData = await fs.readFile(`${templateRoot}/.env`, {
-                encoding: "utf8",
-            });
+            const envData = await fs.readFile(
+                path.join(templateRoot, "cloudinary", ".env"),
+                { encoding: "utf8" },
+            );
             await fs.appendFile(".env", `\n${envData}`);
         } else if (answers.fileUpload == "s3") {
-            const templateRoot = "../template/fileUploads/aws";
+            const templateRoot = tp("fileUploads");
             await fsExtra.copy(
-                "../template/fileUploads/multer.middleware.js",
+                `${templateRoot}/multer.middleware.js`,
                 "./middlewares/multer.middleware.js",
             );
             await fsExtra.copy(
-                `${templateRoot}/uploadS3.js`,
+                `${templateRoot}/aws/uploadS3.js`,
                 "./utils/uploadS3.js",
             );
-            const envData = await fs.readFile(`${templateRoot}/.env`, {
-                encoding: "utf8",
-            });
+            const envData = await fs.readFile(
+                path.join(templateRoot, "aws", ".env"),
+                { encoding: "utf8" },
+            );
             await fs.appendFile(".env", `\n${envData}`);
         }
 
@@ -335,21 +348,24 @@ async function init() {
 
             if (answers.database === "nosql") {
                 volumesToDeclare.push("mongodb_data");
-                dockerComposeContent += "  mongodb:\n    image: mongo:latest\n    container_name: mongodb\n    ports:\n      - \"27017:27017\"\n    volumes:\n      - mongodb_data:/data/db\n";
-            }
-            else if (answers.database === "sql") {
+                dockerComposeContent +=
+                    '  mongodb:\n    image: mongo:latest\n    container_name: mongodb\n    ports:\n      - "27017:27017"\n    volumes:\n      - mongodb_data:/data/db\n';
+            } else if (answers.database === "sql") {
                 volumesToDeclare.push("postgres_data");
-                dockerComposeContent += "  postgres:\n    image: postgres:latest\n    container_name: postgres\n    environment:\n      POSTGRES_USER: postgres\n      POSTGRES_PASSWORD: password\n      POSTGRES_DB: mydb\n    ports:\n      - \"5432:5432\"\n    volumes:\n      - postgres_data:/var/lib/postgresql/data\n";
-                dockerComposeContent += "  pgadmin:\n    image: dpage/pgadmin4\n    restart: always\n    environment:\n      PGADMIN_DEFAULT_EMAIL: admin@example.com\n      PGADMIN_DEFAULT_PASSWORD: admin_password\n    ports:\n      - \"8080:80\"\n    depends_on:\n      - postgres\n";
+                dockerComposeContent +=
+                    '  postgres:\n    image: postgres:latest\n    container_name: postgres\n    environment:\n      POSTGRES_USER: postgres\n      POSTGRES_PASSWORD: password\n      POSTGRES_DB: mydb\n    ports:\n      - "5432:5432"\n    volumes:\n      - postgres_data:/var/lib/postgresql/data\n';
+                dockerComposeContent +=
+                    '  pgadmin:\n    image: dpage/pgadmin4\n    restart: always\n    environment:\n      PGADMIN_DEFAULT_EMAIL: admin@example.com\n      PGADMIN_DEFAULT_PASSWORD: admin_password\n    ports:\n      - "8080:80"\n    depends_on:\n      - postgres\n';
             }
 
             if (answers.inMemoryDb === "redis") {
                 volumesToDeclare.push("redis_data");
-                dockerComposeContent += "  redis-stack:\n    image: redis/redis-stack:latest\n    container_name: redis-stack\n    ports:\n      - \"6379:6379\"\n      - \"8001:8001\"\n    volumes:\n      - redis_data:/data\n";
-            }
-            else if (answers.inMemoryDb === "valkey") {
+                dockerComposeContent +=
+                    '  redis-stack:\n    image: redis/redis-stack:latest\n    container_name: redis-stack\n    ports:\n      - "6379:6379"\n      - "8001:8001"\n    volumes:\n      - redis_data:/data\n';
+            } else if (answers.inMemoryDb === "valkey") {
                 volumesToDeclare.push("valkey_data");
-                dockerComposeContent += "  valkey:\n    image: valkey/valkey:latest\n    container_name: valkey\n    ports:\n      - \"7379:7379\"\n    volumes:\n      - valkey_data:/data\n";
+                dockerComposeContent +=
+                    '  valkey:\n    image: valkey/valkey:latest\n    container_name: valkey\n    ports:\n      - "7379:7379"\n    volumes:\n      - valkey_data:/data\n';
             }
 
             if (volumesToDeclare.length > 0) {
@@ -362,7 +378,7 @@ async function init() {
         }
 
         if (answers.validation == "zod") {
-            const templateRoot = "../template/validation/zod/base";
+            const templateRoot = tp("validation", "zod", "base");
             await fsExtra.copy(
                 `${templateRoot}/validate.middleware.js`,
                 "./middlewares/validate.middleware.js",
