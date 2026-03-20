@@ -272,6 +272,10 @@ async function init() {
         if (answers.fileUpload == "cloudinary") {
             const templateRoot = "../template/fileUploads/cloudinary";
             await fsExtra.copy(
+                "../template/fileUploads/multer.middleware.js",
+                "./middlewares/multer.middleware.js",
+            );
+            await fsExtra.copy(
                 `${templateRoot}/cloudinary.js`,
                 "./utils/cloudinary.js",
             );
@@ -282,6 +286,10 @@ async function init() {
         }
         if (answers.fileUpload == "s3") {
             const templateRoot = "../template/fileUploads/aws";
+            await fsExtra.copy(
+                "../template/fileUploads/multer.middleware.js",
+                "./middlewares/multer.middleware.js",
+            );
             await fsExtra.copy(
                 `${templateRoot}/uploadS3.js`,
                 "./utils/uploadS3.js",
