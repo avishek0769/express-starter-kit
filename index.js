@@ -49,7 +49,7 @@ async function init() {
                 { name: "None", value: "none" },
                 { name: "MongoDB (Mongoose)", value: "nosql" },
                 { name: "PostgreSQL (Prisma)", value: "sql" },
-            ]
+            ],
         },
         {
             type: "select",
@@ -99,10 +99,8 @@ async function init() {
         answers.fileUpload == "cloudinary"
             ? "multer cloudinary"
             : answers.fileUpload == "s3"
-              ? "multer s3"
+              ? "multer @aws-sdk/client-s3 mime-types"
               : "";
-
-    
 
     const p2 = exec(
         `npm install express dotenv cors ${jwt} ${zod} ${db} ioredis ${fileUploads}`,
@@ -155,10 +153,11 @@ async function init() {
                     `${templateRoot}/connectDB.js`,
                     "./utils/connectDB.js",
                 );
-                const envData = await fs.readFile(`${templateRoot}/.env`, { encoding: "utf8" });
+                const envData = await fs.readFile(`${templateRoot}/.env`, {
+                    encoding: "utf8",
+                });
                 await fs.appendFile(".env", `\n${envData}`);
-            }
-            else if (answers.database == "sql") {
+            } else if (answers.database == "sql") {
                 const templateRoot = "../template/auth/jwt/postgres";
                 await new Promise((resolve, reject) => {
                     const p = exec(
@@ -185,8 +184,14 @@ async function init() {
                             `${templateRoot}/prisma/schema.prisma`,
                             "./prisma/schema.prisma",
                         );
-                        await fsExtra.copy(`${templateRoot}/app.js`, "./app.js");
-                        await fsExtra.copy(`${templateRoot}/index.js`, "./index.js");
+                        await fsExtra.copy(
+                            `${templateRoot}/app.js`,
+                            "./app.js",
+                        );
+                        await fsExtra.copy(
+                            `${templateRoot}/index.js`,
+                            "./index.js",
+                        );
                         await fsExtra.copy(
                             `${templateRoot}/connectDB.js`,
                             "./utils/connectDB.js",
@@ -195,26 +200,30 @@ async function init() {
                             `${templateRoot}/prismaClient.js`,
                             "./utils/prismaClient.js",
                         );
-                        const envData = await fs.readFile(`${templateRoot}/.env`, { encoding: "utf8" });
+                        const envData = await fs.readFile(
+                            `${templateRoot}/.env`,
+                            { encoding: "utf8" },
+                        );
                         await fs.appendFile(".env", `\n${envData}`);
 
                         execSync("npx prisma generate");
-                        resolve()
+                        resolve();
                     });
-                })
+                });
             }
-        }
-        else if (answers.auth == "clerk") {
+        } else if (answers.auth == "clerk") {
             const templateRoot = "../template/auth/clerk";
 
             await fs.unlink("./controllers/app.js");
             await fsExtra.copy(`${templateRoot}/app.js`, "./app.js");
-            const envData = await fs.readFile(`${templateRoot}/.env`, { encoding: "utf8" });
+            const envData = await fs.readFile(`${templateRoot}/.env`, {
+                encoding: "utf8",
+            });
             await fs.appendFile(".env", `\n${envData}`);
         }
-        
-        if(answers.auth == "none" || answers.auth == "clerk") {
-            if(answers.database == "nosql") {
+
+        if (answers.auth == "none" || answers.auth == "clerk") {
+            if (answers.database == "nosql") {
                 const templateRoot = "../template/database/mongodb";
 
                 await fsExtra.copy(
@@ -225,10 +234,11 @@ async function init() {
                     `${templateRoot}/example.model.js`,
                     "./models/example.model.js",
                 );
-                const envData = await fs.readFile(`${templateRoot}/.env`, { encoding: "utf8" });
+                const envData = await fs.readFile(`${templateRoot}/.env`, {
+                    encoding: "utf8",
+                });
                 await fs.appendFile(".env", `\n${envData}`);
-            }
-            else if (answers.database == "sql") {
+            } else if (answers.database == "sql") {
                 const templateRoot = "../template/database/postgres";
                 const p = exec(
                     "npx prisma init --datasource-provider postgresql --output ../generated/prisma",
@@ -248,19 +258,36 @@ async function init() {
             }
         }
 
-        if(answers.inMemoryDb == "redis") {
+        if (answers.inMemoryDb == "redis") {
             const templateRoot = "../template/in_memory/redis";
-            await fsExtra.copy(
-                `${templateRoot}/redis.js`,
-                "./utils/redis.js",
-            );
-        }
-        else if(answers.inMemoryDb == "valkey") {
+            await fsExtra.copy(`${templateRoot}/redis.js`, "./utils/redis.js");
+        } else if (answers.inMemoryDb == "valkey") {
             const templateRoot = "../template/in_memory/valkey";
             await fsExtra.copy(
                 `${templateRoot}/valkey.js`,
                 "./utils/valkey.js",
             );
+        }
+
+        if (answers.fileUpload == "cloudinary") {
+            const templateRoot = "../template/fileUploads/cloudinary";
+            await fsExtra.copy(
+                `${templateRoot}/cloudinary.js`,
+                "./utils/cloudinary.js",
+            );
+            const envData = await fs.readFile(`${templateRoot}/.env`, {
+                encoding: "utf8",
+            });
+            await fs.appendFile(".env", `\n${envData}`);
+        }
+        if (answers.fileUpload == "s3") {
+            const templateRoot = "../template/fileUploads/aws";
+            await fsExtra.copy(
+                `${templateRoot}/uploadS3.js`,
+                "./utils/uploadS3.js",
+            );
+            const envData = await fs.readFile(`${templateRoot}/.env`, { encoding: "utf8" });
+            await fs.appendFile(".env", `\n${envData}`);
         }
 
         codeGenerationSpinner.succeed("Code generation done");
