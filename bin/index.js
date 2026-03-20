@@ -312,6 +312,8 @@ async function init() {
 
         if (answers.fileUpload == "cloudinary") {
             const templateRoot = tp("fileUploads");
+            
+            await fs.mkdir("./temp")
             await fsExtra.copy(
                 `${templateRoot}/multer.middleware.js`,
                 "./middlewares/multer.middleware.js",
@@ -327,6 +329,8 @@ async function init() {
             await fs.appendFile(".env", `\n${envData}`);
         } else if (answers.fileUpload == "s3") {
             const templateRoot = tp("fileUploads");
+
+            await fs.mkdir("./temp")
             await fsExtra.copy(
                 `${templateRoot}/multer.middleware.js`,
                 "./middlewares/multer.middleware.js",

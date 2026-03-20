@@ -2,6 +2,7 @@ import User from "../models/user.model.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
+import jwt from "jsonwebtoken";
 
 const generateAccessAndRefreshTokens = async (userId) => {
     try {
@@ -77,7 +78,7 @@ const userLogIn = asyncHandler(async (req, res) => {
     const loggedInUser = await User.findByIdAndUpdate(
         user._id,
         { refreshToken },
-        { new: true },
+        { returnDocument: "after" },
     ).select("-password -refreshToken");
 
     res.status(201)
@@ -100,7 +101,7 @@ const userLogOut = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(
         req.user._id,
         { $set: { refreshToken: "" } },
-        { new: true },
+        { returnDocument: "after" },
     );
     res.status(200)
         .clearCookie("accessToken", AccessOptions)
