@@ -214,7 +214,7 @@ async function init() {
         } else if (answers.auth == "clerk") {
             const templateRoot = "../template/auth/clerk";
 
-            await fs.unlink("./controllers/app.js");
+            await fs.unlink("./app.js");
             await fsExtra.copy(`${templateRoot}/app.js`, "./app.js");
             const envData = await fs.readFile(`${templateRoot}/.env`, {
                 encoding: "utf8",
@@ -283,8 +283,7 @@ async function init() {
                 encoding: "utf8",
             });
             await fs.appendFile(".env", `\n${envData}`);
-        }
-        if (answers.fileUpload == "s3") {
+        } else if (answers.fileUpload == "s3") {
             const templateRoot = "../template/fileUploads/aws";
             await fsExtra.copy(
                 "../template/fileUploads/multer.middleware.js",
@@ -294,8 +293,42 @@ async function init() {
                 `${templateRoot}/uploadS3.js`,
                 "./utils/uploadS3.js",
             );
-            const envData = await fs.readFile(`${templateRoot}/.env`, { encoding: "utf8" });
+            const envData = await fs.readFile(`${templateRoot}/.env`, {
+                encoding: "utf8",
+            });
             await fs.appendFile(".env", `\n${envData}`);
+        }
+
+        if (answers.docker) {
+            const volumesToDeclare = [];
+            let dockerComposeContent = "services:\n";
+
+            if (answers.database === "nosql") {
+                volumesToDeclare.push("mongodb_data");
+                dockerComposeContent += "  mongodb:\n    image: mongo:latest\n    container_name: mongodb\n    ports:\n      - \"27017:27017\"\n    volumes:\n      - mongodb_data:/data/db\n";
+            }
+            else if (answers.database === "sql") {
+                volumesToDeclare.push("postgres_data");
+                dockerComposeContent += "  postgres:\n    image: postgres:latest\n    container_name: postgres\n    environment:\n      POSTGRES_USER: postgres\n      POSTGRES_PASSWORD: password\n      POSTGRES_DB: mydb\n    ports:\n      - \"5432:5432\"\n    volumes:\n      - postgres_data:/var/lib/postgresql/data\n";
+                dockerComposeContent += "  pgadmin:\n    image: dpage/pgadmin4\n    restart: always\n    environment:\n      PGADMIN_DEFAULT_EMAIL: admin@example.com\n      PGADMIN_DEFAULT_PASSWORD: admin_password\n    ports:\n      - \"8080:80\"\n    depends_on:\n      - postgres\n";
+            }
+
+            if (answers.inMemoryDb === "redis") {
+                volumesToDeclare.push("redis_data");
+                dockerComposeContent += "  redis-stack:\n    image: redis/redis-stack:latest\n    container_name: redis-stack\n    ports:\n      - \"6379:6379\"\n      - \"8001:8001\"\n    volumes:\n      - redis_data:/data\n";
+            }
+            else if (answers.inMemoryDb === "valkey") {
+                volumesToDeclare.push("valkey_data");
+                dockerComposeContent += "  valkey:\n    image: valkey/valkey:latest\n    container_name: valkey\n    ports:\n      - \"7379:7379\"\n    volumes:\n      - valkey_data:/data\n";
+            }
+
+            if (volumesToDeclare.length > 0) {
+                dockerComposeContent +=
+                    "\nvolumes:\n" +
+                    volumesToDeclare.map((vol) => `  ${vol}:`).join("\n");
+            }
+
+            await fs.writeFile("./docker-compose.yml", dockerComposeContent);
         }
 
         codeGenerationSpinner.succeed("Code generation done");
