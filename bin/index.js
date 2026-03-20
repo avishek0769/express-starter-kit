@@ -269,6 +269,10 @@ async function init() {
                     "./utils/connectDB.js",
                 );
                 await fsExtra.copy(
+                    `${templateRoot}/index.js`,
+                    "./utils/index.js",
+                );
+                await fsExtra.copy(
                     `${templateRoot}/example.model.js`,
                     "./models/example.model.js",
                 );
@@ -289,6 +293,10 @@ async function init() {
                     await fsExtra.copy(
                         `${templateRoot}/connectDB.js`,
                         "./utils/connectDB.js",
+                    );
+                    await fsExtra.copy(
+                        `${templateRoot}/index.js`,
+                        "./utils/index.js",
                     );
                     await fsExtra.copy(
                         `${templateRoot}/prismaClient.js`,
@@ -312,7 +320,7 @@ async function init() {
 
         if (answers.fileUpload == "cloudinary") {
             const templateRoot = tp("fileUploads");
-            
+
             await fs.mkdir("./temp")
             await fsExtra.copy(
                 `${templateRoot}/multer.middleware.js`,
