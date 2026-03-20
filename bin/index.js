@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import inquirer from "inquirer";
 import ora from "ora";
 import { exec, execSync } from "child_process";

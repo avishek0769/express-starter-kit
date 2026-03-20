@@ -1,22 +1,32 @@
 {
-    "name": "backend-kit-npm",
-    "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
-    "directories": {
-        "test": "test"
+    "name": "create-express-starter-kit",
+    "version": "0.1.0",
+    "description": "CLI to scaffold production-ready Express backends with auth, DB, caching, validation, and Docker support.",
+    "bin": {
+        "create-express-starter-kit": "./bin/index.js"
     },
+    "files": [
+        "bin",
+        "templates",
+        "utils"
+    ],
+    "keywords": [
+        "cli",
+        "express",
+        "starter",
+        "backend",
+        "scaffold"
+    ],
+    "author": "Avishek",
+    "license": "ISC",
+    "type": "module",
+    "engines": {
+        "node": ">=18"
+    },
+    "preferGlobal": true,
     "dependencies": {
         "fs-extra": "^11.3.4",
         "inquirer": "^13.3.2",
         "ora": "^9.3.0"
-    },
-    "devDependencies": {},
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
-    "type": "module"
+    }
 }
