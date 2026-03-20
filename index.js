@@ -113,11 +113,11 @@ async function init() {
             installationSpinner.fail(`Process exited with code ${code}`);
         }
 
-        const codeGenerationSpinner = ora("Generating code...").start();
+        const codeGenerationSpinner = ora("Setting up codebase...").start();
 
         await fsExtra.copy("../template/base/", "./").catch((err) => {
             console.error("Error copying files:", err);
-            codeGenerationSpinner.fail("Code generation failed");
+            codeGenerationSpinner.fail("Codebase setup failed");
             process.exit(1);
         });
 
@@ -157,7 +157,8 @@ async function init() {
                     encoding: "utf8",
                 });
                 await fs.appendFile(".env", `\n${envData}`);
-            } else if (answers.database == "sql") {
+            }
+            else if (answers.database == "sql") {
                 const templateRoot = "../template/auth/jwt/postgres";
                 await new Promise((resolve, reject) => {
                     const p = exec(
@@ -210,6 +211,34 @@ async function init() {
                         resolve();
                     });
                 });
+            }
+
+            if(answers.validation == "zod") {
+                const templateRoot = "../template/validation/zod/jwt";
+                await fs.unlink("./controllers/user.controller.js");
+                await fs.unlink("./routers/user.route.js");
+
+                if (answers.database == "nosql") {
+                    await fsExtra.copy(
+                        `${templateRoot}/user.controller.m.js`,
+                        "./controllers/user.controller.js",
+                    );
+                }
+                else if (answers.database == "sql") {
+                    await fsExtra.copy(
+                        `${templateRoot}/user.controller.p.js`,
+                        "./controllers/user.controller.js",
+                    );
+                }
+
+                await fsExtra.copy(
+                    `${templateRoot}/user.schema.js`,
+                    "./schemas/user.schema.js",
+                );
+                await fsExtra.copy(
+                    `${templateRoot}/user.route.js`,
+                    "./routers/user.route.js",
+                );
             }
         } else if (answers.auth == "clerk") {
             const templateRoot = "../template/auth/clerk";
@@ -331,7 +360,27 @@ async function init() {
             await fs.writeFile("./docker-compose.yml", dockerComposeContent);
         }
 
-        codeGenerationSpinner.succeed("Code generation done");
+        if (answers.validation == "zod") {
+            const templateRoot = "../template/validation/zod/base";
+            await fsExtra.copy(
+                `${templateRoot}/validate.middleware.js`,
+                "./middlewares/validate.middleware.js",
+            );
+
+            if (answers.auth == "none" || answers.auth == "clerk") {
+                await fs.unlink("./routers/example.route.js");
+                await fsExtra.copy(
+                    `${templateRoot}/example.route.js`,
+                    "./routers/example.route.js",
+                );
+                await fsExtra.copy(
+                    `${templateRoot}/user.schema.js`,
+                    "./schemas/user.schema.js",
+                );
+            }
+        }
+
+        codeGenerationSpinner.succeed("Codebase setup done");
     });
 }
 
