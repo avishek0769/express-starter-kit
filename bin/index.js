@@ -254,6 +254,7 @@ async function init() {
 
             await fs.unlink("./app.js");
             await fsExtra.copy(`${templateRoot}/app.js`, "./app.js");
+            await fsExtra.copy(`${templateRoot}/auth.middleware.js`, "./middlewares/auth.middleware.js");
             const envData = await fs.readFile(path.join(templateRoot, ".env"), {
                 encoding: "utf8",
             });
@@ -270,7 +271,7 @@ async function init() {
                 );
                 await fsExtra.copy(
                     `${templateRoot}/index.js`,
-                    "./utils/index.js",
+                    "./index.js",
                 );
                 await fsExtra.copy(
                     `${templateRoot}/example.model.js`,
@@ -296,7 +297,7 @@ async function init() {
                     );
                     await fsExtra.copy(
                         `${templateRoot}/index.js`,
-                        "./utils/index.js",
+                        "./index.js",
                     );
                     await fsExtra.copy(
                         `${templateRoot}/prismaClient.js`,

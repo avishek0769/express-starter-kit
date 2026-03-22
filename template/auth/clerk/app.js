@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { clerkMiddleware, requireAuth } from "@clerk/express";
+import { clerkMiddleware } from "@clerk/express";
 
 const app = express();
 
@@ -25,7 +25,7 @@ app.use(clerkMiddleware());
 
 // Routes
 import exampleRouter from "./routers/example.route.js";
-app.use("/api/v1/example", requireAuth(), exampleRouter);
+app.use("/api/v1/example", exampleRouter);
 
 app.use(errorHandler);
 
