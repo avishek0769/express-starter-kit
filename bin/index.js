@@ -104,7 +104,7 @@ async function init() {
     const db =
         answers.database == "nosql"
             ? "mongoose"
-            : "prisma @prisma/client @prisma/adapter-pg pg";
+            : "prisma @prisma/client @prisma/adapter-pg pg @prisma/client-runtime-utils";
     const fileUploads =
         answers.fileUpload == "cloudinary"
             ? "multer cloudinary"
