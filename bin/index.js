@@ -15,23 +15,17 @@ const TEMPLATE_BASE = path.join(__dirname, "../template");
 const tp = (...segments) => path.join(TEMPLATE_BASE, ...segments);
 
 async function init() {
-    const p1 = exec("npm init -y");
-    p1.on("exit", async () => {
-        const packageJsonFileContent = JSON.parse(
-            await fs.readFile("package.json", { encoding: "utf8" }),
-        );
-        packageJsonFileContent.type = "module";
-        packageJsonFileContent.scripts = {
-            dev: "node --watch index.js",
-        };
-        await fs.writeFile(
-            "package.json",
-            JSON.stringify(packageJsonFileContent),
-        );
-        p1.kill();
-    });
-
     const answers = await inquirer.prompt([
+        {
+            type: "select",
+            message: "Choose package manager -",
+            name: "packageManager",
+            choices: [
+                { name: "npm", value: "npm" },
+                { name: "yarn", value: "yarn" },
+                { name: "pnpm", value: "pnpm" },
+            ],
+        },
         {
             type: "select",
             message: "Choose authentication type -",
@@ -92,6 +86,41 @@ async function init() {
         },
     ]);
 
+    let initCommand = ""
+    let installCommand = "";
+    let executionCommand = "";
+
+    switch (answers.packageManager) {
+        case "npm":
+            initCommand = "npm init -y";
+            installCommand = "npm install";
+            executionCommand = "npx"
+            break;
+        case "yarn":
+            initCommand = "yarn init";
+            installCommand = "yarn add";
+            executionCommand = "yarn dlx"
+            break;
+        case "pnpm":
+            initCommand = "pnpm init";
+            installCommand = "pnpm add";
+            executionCommand = "pnpm dlx"
+            break;
+    }
+
+    execSync(initCommand);
+    const packageJsonFileContent = JSON.parse(
+        await fs.readFile("package.json", { encoding: "utf8" }),
+    );
+    packageJsonFileContent.type = "module";
+    packageJsonFileContent.scripts = {
+        dev: "node --watch index.js",
+    };
+    await fs.writeFile(
+        "package.json",
+        JSON.stringify(packageJsonFileContent),
+    );
+
     const installationSpinner = ora("Installing necessary packages...").start();
 
     const jwt =
@@ -112,11 +141,11 @@ async function init() {
               ? "multer @aws-sdk/client-s3 mime-types"
               : "";
 
-    const p2 = exec(
-        `npm install express dotenv cors ${jwt} ${zod} ${db} ioredis ${fileUploads}`,
+    const installProcess = exec(
+        `${installCommand} express dotenv cors ${jwt} ${zod} ${db} ioredis ${fileUploads}`,
     );
 
-    p2.on("exit", async (code) => {
+    installProcess.on("exit", async (code) => {
         if (code === 0) {
             installationSpinner.succeed("Installation done");
         } else {
@@ -171,11 +200,11 @@ async function init() {
             } else if (answers.database == "sql") {
                 const templateRoot = tp("auth", "jwt", "postgres");
                 await new Promise((resolve, reject) => {
-                    const p = exec(
-                        "npx prisma init --datasource-provider postgresql --output ../generated/prisma",
+                    const prismaProcess = exec(
+                        `${executionCommand} prisma init --datasource-provider postgresql --output ../generated/prisma`,
                     );
 
-                    p.on("exit", async (code) => {
+                    prismaProcess.on("exit", async (code) => {
                         if (code !== 0) {
                             console.log("Error initializing prisma: ", code);
                         }
