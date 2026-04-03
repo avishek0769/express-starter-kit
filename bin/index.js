@@ -374,11 +374,11 @@ async function init() {
             if (answers.inMemoryDb === "redis") {
                 volumesToDeclare.push("redis_data");
                 dockerComposeContent +=
-                    '  redis-stack:\n    image: redis/redis-stack:latest\n    container_name: redis-stack\n    ports:\n      - "6379:6379"\n      - "8001:8001"\n    volumes:\n      - redis_data:/data\n';
+                    '  redis-stack:\n    image: redis/redis-stack:latest\n    container_name: redis-stack\n    ports:\n      - "6379:6379"\n      - "8001:8001"\n    volumes:\n      - redis_data:/var/lib/redis\n';
             } else if (answers.inMemoryDb === "valkey") {
                 volumesToDeclare.push("valkey_data");
                 dockerComposeContent +=
-                    '  valkey:\n    image: valkey/valkey:latest\n    container_name: valkey\n    ports:\n      - "7379:7379"\n    volumes:\n      - valkey_data:/data\n';
+                    '  valkey:\n    image: valkey/valkey:latest\n    container_name: valkey\n    ports:\n      - "7379:7379"\n    volumes:\n      - valkey_data:/var/lib/valkey\n';
             }
 
             if (volumesToDeclare.length > 0) {
