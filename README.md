@@ -7,7 +7,7 @@ A powerful CLI tool that interactively scaffolds a production-ready Express.js b
 You can generate your project in an empty directory without installing the package globally. Run one of the following commands:
 
 ```bash
-npm create express-starter-kit
+pnpm dlx create-express-starter-kit
 ```
 **OR**
 ```bash
