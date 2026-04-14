@@ -24,12 +24,12 @@ The CLI prompts you with several configuration choices to automatically wire up 
   - yarn
 - **Authentication 🔐**: 
   - None
-  - Custom JWT-based Auth (with Access & Refresh Tokens, bcrypt, and cookies)
+  - Custom JWT (basic)
+  - Custom JWT-2FA (email verification + password reset via Redis + Resend)
   - Clerk Auth Support
 - **Database 🗄️**: 
   - MongoDB (via Mongoose)
   - PostgreSQL (via Prisma ORM - automatically initializes schemas)
-  - None
 - **In-Memory Cache / DB ⚡**: 
   - Redis (via ioredis)
   - Valkey
@@ -68,19 +68,35 @@ When the setup begins, the CLI scaffolding lays down a lean, base Express app us
 ### 🔄 How Selections Modify the Codebase
 Based on your exact selections, files are cleanly swapped or generated so you are never left with useless "dead code":
 
-**Custom JWT Auth**
-Replaces example files with full Register/Login/Logout/Refresh token functionality.
+**Custom JWT Auth (basic / 2FA)**
+Replaces example files with auth-ready user routes/controllers and middleware.
 ```text
 .
 ├── controllers/
 │   └── user.controller.js
+├── models/
+│   └── user.model.js      (MongoDB only)
 ├── middlewares/
 │   └── auth.middleware.js
 ├── routers/
 │   └── user.route.js
+├── prisma/
+│   └── schema.prisma      (PostgreSQL only)
 ├── app.js          (updated)
 └── index.js        (updated)
 ```
+
+JWT-basic
+- Login endpoint: `/login`
+- Register endpoint: `/register`
+- Required env keys: `JWT_SECRET`, `JWT_EXPIRES_IN`
+
+JWT-2FA templates also include:
+- Email verification endpoints: `/send-verification-code`, `/verify-email`
+- Password reset endpoints: `/send-reset-code`, `/reset-password`
+- Current profile endpoint: `/current`
+- Refresh endpoint: `/refresh-auth-tokens`
+- Required env key: `RESEND_API_KEY`
 
 **Clerk Auth**
 Rewrites `app.js` to mount Clerk's strict express middleware.
@@ -111,7 +127,7 @@ Initializes Prisma schema and singleton database clients.
 ```
 
 **Validation (Zod)**
-Injects validation middleware and Zod schema definitions.
+Injects validation middleware and Zod schema definitions only (does not overwrite auth controllers/routes).
 ```text
 .
 ├── middlewares/
@@ -150,7 +166,7 @@ Writes a custom compose file defining services uniquely based on databases/cache
 1. **Initializes the Project:** Creates your `package.json` configured with ESM (`type: "module"`) and sets up a `dev` script using `node --watch`.
 2. **Installs Dependencies:** Dynamically installs only the packages you need (e.g., `express`, `cors`, `zod`, `mongoose`, `prisma`, `multer`, etc.) using your chosen package manager (npm, pnpm, or yarn).
 3. **Scaffolds Structure:** Sets up a clean domain-driven directory structure including `controllers/`, `routers/`, `models/`, `middlewares/`, `utils/`, and error-handling utilities like `ApiError` and `ApiResponse`. 
-4. **Writes Boilerplate:** Injects full, ready-to-use boilerplate code (e.g., fully-functional JWT Login/Register/Refresh flows, Prisma connections, Zod error validators) based on your exact technology stack.
+4. **Writes Boilerplate:** Injects full, ready-to-use boilerplate code (e.g., JWT basic/2FA flows, Prisma connections, Zod validators) based on your exact technology stack.
 5. **Generates Environment Variables:** Appends the necessary secrets, Database URIs, and config keys directly into a `.env` file so you know exactly what is required.
 
 ## 🚀 Getting Started
