@@ -290,28 +290,9 @@ async function init() {
 
             if (answers.validation == "zod") {
                 const templateRoot = tp("validation", "zod", "jwt");
-                await fs.unlink("./controllers/user.controller.js");
-                await fs.unlink("./routers/user.route.js");
-
-                if (answers.database == "nosql") {
-                    await fsExtra.copy(
-                        `${templateRoot}/user.controller.m.js`,
-                        "./controllers/user.controller.js",
-                    );
-                } else if (answers.database == "sql") {
-                    await fsExtra.copy(
-                        `${templateRoot}/user.controller.p.js`,
-                        "./controllers/user.controller.js",
-                    );
-                }
-
                 await fsExtra.copy(
                     `${templateRoot}/user.schema.js`,
                     "./schemas/user.schema.js",
-                );
-                await fsExtra.copy(
-                    `${templateRoot}/user.route.js`,
-                    "./routers/user.route.js",
                 );
             }
         } else if (answers.auth == "clerk") {
@@ -464,11 +445,6 @@ async function init() {
             );
 
             if (answers.auth == "none" || answers.auth == "clerk") {
-                await fs.unlink("./routers/example.route.js");
-                await fsExtra.copy(
-                    `${templateRoot}/example.route.js`,
-                    "./routers/example.route.js",
-                );
                 await fsExtra.copy(
                     `${templateRoot}/user.schema.js`,
                     "./schemas/user.schema.js",
