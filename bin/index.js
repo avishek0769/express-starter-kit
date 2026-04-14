@@ -32,7 +32,8 @@ async function init() {
             name: "auth",
             choices: [
                 { name: "None", value: "none" },
-                { name: "Custom JWT-based Auth", value: "jwt" },
+                { name: "Custom JWT (basic)", value: "jwt-basic" },
+                { name: "Custom JWT-2FA (redis + resend)", value: "jwt-2fa" },
                 { name: "Clerk", value: "clerk" },
             ],
         },
@@ -50,7 +51,6 @@ async function init() {
             message: "Choose database integration -",
             name: "database",
             choices: [
-                { name: "None", value: "none" },
                 { name: "MongoDB (Mongoose)", value: "nosql" },
                 { name: "PostgreSQL (Prisma)", value: "sql" },
             ],
@@ -123,23 +123,34 @@ async function init() {
 
     const installationSpinner = ora("Installing necessary packages...").start();
 
-    const jwt =
-        answers.auth == "jwt"
-            ? "jsonwebtoken cookie-parser bcrypt"
-            : answers.auth == "clerk"
-              ? "@clerk/express"
-              : "";
-    const zod = answers.validation == "zod" ? "zod" : "";
-    const db =
-        answers.database == "nosql"
-            ? "mongoose"
-            : "prisma @prisma/client @prisma/adapter-pg pg @prisma/client-runtime-utils";
-    const fileUploads =
-        answers.fileUpload == "cloudinary"
-            ? "multer cloudinary"
-            : answers.fileUpload == "s3"
-              ? "multer @aws-sdk/client-s3 mime-types"
-              : "";
+    let jwt = "";
+    if (answers.auth === "jwt-basic" || answers.auth === "jwt-2fa") {
+        jwt = "jsonwebtoken cookie-parser bcrypt";
+        if (answers.auth === "jwt-2fa") {
+            jwt += " ioredis resend";
+        }
+    } else if (answers.auth === "clerk") {
+        jwt = "@clerk/express";
+    }
+
+    let zod = "";
+    if (answers.validation === "zod") {
+        zod = "zod";
+    }
+
+    let db = "";
+    if (answers.database === "nosql") {
+        db = "mongoose";
+    } else {
+        db = "prisma @prisma/client @prisma/adapter-pg pg @prisma/client-runtime-utils";
+    }
+
+    let fileUploads = "";
+    if (answers.fileUpload === "cloudinary") {
+        fileUploads = "multer cloudinary";
+    } else if (answers.fileUpload === "s3") {
+        fileUploads = "multer @aws-sdk/client-s3 mime-types";
+    }
 
     const installProcess = exec(
         `${installCommand} express dotenv cors ${jwt} ${zod} ${db} ioredis ${fileUploads}`,
@@ -160,7 +171,7 @@ async function init() {
             process.exit(1);
         });
 
-        if (answers.auth == "jwt") {
+        if (answers.auth == "jwt-basic" || answers.auth == "jwt-2fa") {
             await fs.unlink("./controllers/example.controller.js");
             await fs.unlink("./routers/example.route.js");
             await fs.unlink("./middlewares/example.middleware.js");
@@ -168,8 +179,17 @@ async function init() {
             await fs.unlink("./index.js");
 
             if (answers.database == "nosql") {
-                const templateRoot = tp("auth", "jwt", "mongo");
-
+                let templateRoot;
+                if (answers.auth == "jwt-2fa") {
+                    const redisTemplateRoot = tp("in_memory", "redis");
+                    await fsExtra.copy(`${redisTemplateRoot}/redis.js`, "./utils/redis.js");
+                    await fs.appendFile(".env", `\nRESEND_API_KEY=""\n`);
+                    templateRoot = tp("auth", "jwt", "2fa", "mongo");
+                }
+                else {
+                    templateRoot = tp("auth", "jwt", "mongo");
+                }
+                
                 await fsExtra.copy(
                     `${templateRoot}/user.controller.js`,
                     "./controllers/user.controller.js",
@@ -182,6 +202,9 @@ async function init() {
                     `${templateRoot}/user.route.js`,
                     "./routers/user.route.js",
                 );
+                
+                templateRoot = tp("auth", "jwt", "mongo");
+
                 await fsExtra.copy(
                     `${templateRoot}/auth.middleware.js`,
                     "./middlewares/auth.middleware.js",
@@ -197,7 +220,8 @@ async function init() {
                     { encoding: "utf8" },
                 );
                 await fs.appendFile(".env", `\n${envData}`);
-            } else if (answers.database == "sql") {
+            }
+            else if (answers.database == "sql") {
                 const templateRoot = tp("auth", "jwt", "postgres");
                 await new Promise((resolve, reject) => {
                     const prismaProcess = exec(
@@ -313,7 +337,8 @@ async function init() {
                     },
                 );
                 await fs.appendFile(".env", `\n${envData}`);
-            } else if (answers.database == "sql") {
+            }
+            else if (answers.database == "sql") {
                 const templateRoot = tp("database", "postgres");
                 const p = exec(
                     "npx prisma init --datasource-provider postgresql --output ../generated/prisma",
