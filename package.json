@@ -1,6 +1,6 @@
 {
     "name": "create-express-starter-kit",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "CLI to scaffold production-ready Express backends with auth, DB, caching, validation, and Docker support.",
     "bin": {
         "create-express-starter-kit": "bin/index.js"
