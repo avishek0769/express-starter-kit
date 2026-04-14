@@ -222,7 +222,11 @@ async function init() {
                 await fs.appendFile(".env", `\n${envData}`);
             }
             else if (answers.database == "sql") {
-                const templateRoot = tp("auth", "jwt", "postgres");
+                const templateRoot =
+                    answers.auth == "jwt-2fa"
+                        ? tp("auth", "jwt", "2fa", "postgres")
+                        : tp("auth", "jwt", "postgres");
+                const commonTemplateRoot = tp("auth", "jwt", "postgres");
                 await new Promise((resolve, reject) => {
                     const prismaProcess = exec(
                         `${executionCommand} prisma init --datasource-provider postgresql --output ../generated/prisma`,
@@ -231,6 +235,14 @@ async function init() {
                     prismaProcess.on("exit", async (code) => {
                         if (code !== 0) {
                             console.log("Error initializing prisma: ", code);
+                        }
+                        if (answers.auth == "jwt-2fa") {
+                            const redisTemplateRoot = tp("in_memory", "redis");
+                            await fsExtra.copy(
+                                `${redisTemplateRoot}/redis.js`,
+                                "./utils/redis.js",
+                            );
+                            await fs.appendFile(".env", `\nRESEND_API_KEY=""\n`);
                         }
                         await fsExtra.copy(
                             `${templateRoot}/user.controller.js`,
@@ -241,7 +253,7 @@ async function init() {
                             "./routers/user.route.js",
                         );
                         await fsExtra.copy(
-                            `${templateRoot}/auth.middleware.js`,
+                            `${commonTemplateRoot}/auth.middleware.js`,
                             "./middlewares/auth.middleware.js",
                         );
                         await fsExtra.copy(
@@ -249,23 +261,23 @@ async function init() {
                             "./prisma/schema.prisma",
                         );
                         await fsExtra.copy(
-                            `${templateRoot}/app.js`,
+                            `${commonTemplateRoot}/app.js`,
                             "./app.js",
                         );
                         await fsExtra.copy(
-                            `${templateRoot}/index.js`,
+                            `${commonTemplateRoot}/index.js`,
                             "./index.js",
                         );
                         await fsExtra.copy(
-                            `${templateRoot}/connectDB.js`,
+                            `${commonTemplateRoot}/connectDB.js`,
                             "./utils/connectDB.js",
                         );
                         await fsExtra.copy(
-                            `${templateRoot}/prismaClient.js`,
+                            `${commonTemplateRoot}/prismaClient.js`,
                             "./utils/prismaClient.js",
                         );
                         const envData = await fs.readFile(
-                            path.join(templateRoot, ".env"),
+                            path.join(commonTemplateRoot, ".env"),
                             { encoding: "utf8" },
                         );
                         await fs.appendFile(".env", `\n${envData}`);
