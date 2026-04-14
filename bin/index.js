@@ -289,7 +289,7 @@ async function init() {
             }
 
             if (answers.validation == "zod") {
-                const templateRoot = tp("validation", "zod", "jwt");
+                const templateRoot = tp("validation", "zod");
                 await fsExtra.copy(
                     `${templateRoot}/user.schema.js`,
                     "./schemas/user.schema.js",
@@ -438,7 +438,7 @@ async function init() {
         }
 
         if (answers.validation == "zod") {
-            const templateRoot = tp("validation", "zod", "base");
+            const templateRoot = tp("validation", "zod");
             await fsExtra.copy(
                 `${templateRoot}/validate.middleware.js`,
                 "./middlewares/validate.middleware.js",
